@@ -1,0 +1,78 @@
+"Resources": {
+	"sfourdevsns" : {
+	  "Type" : "AWS::SNS::Topic",
+	  "Properties" : {
+		  "ArchivePolicy" : {
+			"MessageRetentionPeriod": "30"
+		  },
+		  "DisplayName" : "stonewallin-sfour-dev-bucket-notifier",
+		  "Tags" : [
+			  {	
+				"Key": "project",
+				"Value": "sfour"
+			  },
+			  {
+				"Key": "environment",
+				"Value": "dev"
+			  }
+		  ],
+		  "TopicName" : "stonewallin-sfour-dev-bucket-notifier"
+		}
+	},
+	"sfourdevbucket" : {
+	  "Type" : "AWS::S3::Bucket",
+	  "Properties" : {
+		  "BucketName" : "stonewall-sfour-dev",
+		  "AccessControl" : "BucketOwnerFullControl" ,
+		  "BucketEncryption" : {
+			  "ServerSideEncryptionConfiguration": [
+				{
+				  "ServerSideEncryptionByDefault": {
+					"SSEAlgorithm": "AES256"
+				  }
+				}
+			  ]
+		   },
+		  "LifecycleConfiguration" : {
+						"Rules": [
+							{
+								"Id": "PermanentlyDeleteRule60",
+								"Prefix": "test-data",
+								"Status": "Enabled",
+								"ExpirationInDays": 60
+							}
+						]
+					},
+		  "NotificationConfiguration" : {
+						"TopicConfigurations": [
+							{
+								"Topic": { "Ref" : "sfourdevsns" },
+								"Event": "s3:ObjectCreated*"
+							}
+						]
+					},
+		  "OwnershipControls" : {
+						"Rules": [
+							{
+								"ObjectOwnership": "BucketOwnerPreferred"
+							}
+						]
+					},
+		  "PublicAccessBlockConfiguration" : {
+			  "BlockPublicAcls" : "true",
+			  "BlockPublicPolicy" : "true",
+			  "RestrictPublicBuckets" : "true"
+		  },
+		  "Tags" : [
+			  {	
+				"Key": "project",
+				"Value": "sfour"
+			  },
+			  {
+				"Key": "environment",
+				"Value": "dev"
+			  }
+		  ]
+		}
+	}
+}
