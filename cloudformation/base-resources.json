@@ -3,9 +3,6 @@
         "sfourdevsns": {
             "Type": "AWS::SNS::Topic",
             "Properties": {
-                "ArchivePolicy": {
-                    "MessageRetentionPeriod": "30"
-                },
                 "DisplayName": "stonewallin-sfour-dev-bucket-notifier",
                 "Tags": [
                     {
@@ -20,6 +17,64 @@
                 "TopicName": "stonewallin-sfour-dev-bucket-notifier"
             }
         },
+		"sfourdevsnsPolicy": {
+		  "Type": "AWS::SNS::TopicPolicy",
+		  "Properties": {
+			"Topics": [
+			  { "Ref": "sfourdevsns" }
+			],
+			"PolicyDocument": {
+			  "Version": "2012-10-17",
+			  "Statement": [
+				{
+				  "Effect": "Allow",
+				  "Principal": {
+					"Service": "s3.amazonaws.com"
+				  },
+				  "Action": "sns:Publish",
+				  "Resource": { "Ref": "sfourdevsns" },
+				  "Condition": {
+					"ArnLike": {
+					  "aws:SourceArn": {
+						"Fn::Sub": "arn:aws:s3:::stonewall-sfour-dev"
+					  }
+					}
+				  }
+				}
+			  ]
+			}
+		  }
+		},
+		"sfourdevsqs": {
+			  "Type" : "AWS::SQS::Queue",
+			  "Properties" : {
+				  "DelaySeconds" : 0,
+				  "MaximumMessageSize" : 262144,
+				  "MessageRetentionPeriod" : 345600,
+				  "QueueName" : "stonewallin-sfour-dev-bucket-queue",
+				  "ReceiveMessageWaitTimeSeconds" : 5,
+				  "Tags" : [
+						{
+							"Key": "project",
+							"Value": "sfour"
+						},
+						{
+							"Key": "environment",
+							"Value": "dev"
+						}
+					],
+				  "VisibilityTimeout" : 300
+				}
+		},
+		"sfourdevsqssub": {
+			"Type" : "AWS::SNS::Subscription",
+			"Properties" : {
+				"Endpoint" : { "Fn::GetAtt": [ "sfourdevsqs", "Arn" ] },
+				"Protocol" : "sqs",
+				"RawMessageDelivery" : false,
+				"TopicArn" : { "Ref" :  "sfourdevsns" }
+			}
+		},
         "sfourdevbucket": {
             "Type": "AWS::S3::Bucket",
             "Properties": {
@@ -50,7 +105,7 @@
                             "Topic": {
                                 "Ref": "sfourdevsns"
                             },
-                            "Event": "s3:ObjectCreated*"
+                            "Event": "s3:ObjectCreated:*"
                         }
                     ]
                 },
